@@ -49,13 +49,33 @@ public class Main {
         private final Map<TaskGroup, Semaphore> groupLocks;
 
         /**
-         * Constructor that initializes the executor service and starts the task processor.
-         * 
-         * @param maxConcurrency Maximum number of concurrent tasks that can run
+         * Constructor that initializes the executor service with a fixed thread pool.
+         *
+         * @param maxConcurrency Maximum number of concurrent tasks that can run.
+         *                      If null or non-positive, a cached thread pool is used instead.
          */
-        public TaskExecutorImpl(int maxConcurrency) {
+        public TaskExecutorImpl(Integer maxConcurrency) {
             // Create a fixed thread pool with specified concurrency limit
-            this.executorService = Executors.newFixedThreadPool(maxConcurrency);
+            if (maxConcurrency == null || maxConcurrency <= 0) {
+                this.executorService = Executors.newCachedThreadPool();
+            } else {
+                this.executorService = Executors.newFixedThreadPool(maxConcurrency);
+            }
+            // Initialize the task queue
+            this.taskQueue = new LinkedBlockingQueue<>();
+            // Initialize the map for task group locks
+            this.groupLocks = new ConcurrentHashMap<>();
+            // Start the task processor
+//            startTaskProcessor();
+        }
+
+        /**
+         * Constructor that initializes the executor service with a cached thread pool.
+         * This allows dynamic thread creation as needed.
+         */
+        public TaskExecutorImpl() {
+            // Create a fixed thread pool with specified concurrency limit
+            this.executorService = Executors.newCachedThreadPool();
             // Initialize the task queue
             this.taskQueue = new LinkedBlockingQueue<>();
             // Initialize the map for task group locks
